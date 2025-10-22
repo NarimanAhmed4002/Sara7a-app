@@ -14,7 +14,8 @@ export const globalErrorHandler = async (err, req, res, next)=>{
         // if(req.file){
         //     fs.unlinkSync(req.file.path); // delete the file from the server if it exists
         // }
-        if(err.message === "jwt expired"){
+        try {
+            if(err.message === "jwt expired"){
             const refreshToken = req.headers.refreshToken;
             const payload = verifyToken(refreshToken);
             const tokenExist = await Token.findOneAndDelete({
@@ -52,4 +53,12 @@ export const globalErrorHandler = async (err, req, res, next)=>{
             globalErrorHandler:true,
             stack:err.stack
         });
+        } catch (error) {
+            return res.status(err.cause || 500).json({
+            message:err.message,
+            success:false,
+            globalErrorHandler:true,
+            stack:err.stack
+        });
+        }
     } 

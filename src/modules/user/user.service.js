@@ -1,5 +1,4 @@
 import { User } from "../../DB/models/user.model.js";
-import jwt from "jsonwebtoken";
 import fs from "node:fs";
 import cloudinary from "../../utils/cloud/cloudinary.config.js";
 export const deleteUser = async (req, res, next)=>{

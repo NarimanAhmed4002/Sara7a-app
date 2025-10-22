@@ -9,22 +9,23 @@ export function bootstrap (app, express) {
         windowMs: 60 *1000, // 1 min
         limit:3,
         // legacyHeaders:true // hide no of limited times from headers
-        handler:(req,res,next, option)=>{
+        handler:(req,res,next, options)=>{
         // throw new Error("ay haga", {cause:400}) // option >> btdeny kol elly ratelimit 3ndha by default
-        throw new Error(option.message,{cause:option.statusCode});
+        throw new Error(options.message,{cause:options.statusCode});
         },
-        identifier:req.ip // req.token
+        identifier:req.ip // req.token // each user has its own limit
     })
-    const limter2 = rateLimit({
-        windowMs: 60 *1000, // 1 min
-        limit:3,
-        // legacyHeaders:true // hide no of limited times from headers
-        handler:(req,res,next, option)=>{
-        // throw new Error("ay haga", {cause:400}) // option >> btdeny kol elly ratelimit 3ndha by default
-        throw new Error(option.message,{cause:option.statusCode});
-        },
-        identifier:req.ip // req.token
-    })
+    // const limter2 = rateLimit({
+    //     windowMs: 60 *1000, // 1 min
+    //     limit:3,
+    //     // legacyHeaders:true // hide no of limited times from headers
+    //     handler:(req,res,next, options)=>{
+    //     // throw new Error("ay haga", {cause:400}) // option >> btdeny kol elly ratelimit 3ndha by default
+    //     throw new Error(options.message,{cause:options.statusCode});
+    //     },
+    //      skipSuccessfulRequests:true, // don't count successful requests
+    //     identifier:req.ip // req.token
+    // }) 
     app.use("/auth", limter)
     // app.use("/user", limter2) // momken a3ml configrations lkol module
     // parse raw json
