@@ -1,4 +1,5 @@
 import { model, Schema } from "mongoose";
+import { type } from "node:os";
 const schema = new Schema({
     firstName:{
         type: String,
@@ -66,7 +67,10 @@ const schema = new Schema({
     credentialsUpdatedAt:{
         type:Date,
         default:Date.now() // register / reset password
-    }
+    },
+    deletedAt:{
+        type:Date
+    },
 },{timestamps: true, toObject:{ virtuals:true }, toJSON:{ virtuals:true }});
 
 export const User = model("User", schema)

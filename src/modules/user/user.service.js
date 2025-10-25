@@ -1,14 +1,18 @@
 import { User } from "../../DB/models/user.model.js";
 import fs from "node:fs";
-import cloudinary from "../../utils/cloud/cloudinary.config.js";
+import cloudinary, { uploadFile } from "../../utils/cloud/cloudinary.config.js";
 export const deleteUser = async (req, res, next)=>{
-    if(req.user.profilePictureCloud.public_id){
-        await cloudinary.api.delete_resources_by_prefix(`Sara7a-app/Users/${req.user._id}`);
-        await cloudinary.api.delete_folder(`Sara7a-app/Users/${req.user._id}`);
-    }
-    await User.deleteOne({_id:req.user._id})
+    await User.updateOne(
+        {_id:req.user._id}, 
+        {deletedAt:Date.now(), credentialsUpdatedAt:Date.now()});
+    // delete token
+    await Token.deleteMany({user:req.user._id});
     // send response
-    return res.status(200).json({message:"User deleted successfully!", success:true})
+    return res.status(200)
+        .json({
+        message:"User deleted successfully!", 
+        success:true
+    })
     
 }
 
@@ -37,10 +41,10 @@ export const uploadProfileCloud = async (req, res, next)=>{
     const file = req.file;
     const user = req.user;
     await cloudinary.uploader.destroy(user.profilePictureCloud.public_id)
-    const {secure_url, public_id} = await cloudinary.uploader.upload(
-        req.file.path, 
-        {folder:`Sara7a-app/Users/${user._id}/profile-pics`}
-    )
+    const {secure_url, public_id} = await uploadFile({
+        path:file.path,
+        options: uploadOptions
+    })
 
     // Update DB
     await User.updateOne({_id:req.user._id},{profilePictureCloud:{secure_url, public_id}})

@@ -1,4 +1,4 @@
-import {fileTypeFromBuffer} from "file-type";
+ import {fileTypeFromBuffer} from "file-type";
 import fs from "node:fs";
 
 export const fileValidation = (allowedTypes = ["image/jpeg", "image/png"])=>{

@@ -19,7 +19,7 @@ export const isAuthenticated = async(req, res, next)=>{
     // check user existence in DB
     const userExist = await User.findById(payload.id)
     if(!userExist){
-        throw new Error("User is not find",{cause:404});
+        throw new Error("User is not found",{cause:404});
     };
 
     // date take time in milli seconds & iat is in seconds

@@ -1,10 +1,8 @@
 import { User } from "../../DB/models/user.model.js";
-import bycrypt from "bcrypt";
 import { sendMail } from "../../utils/email/index.js";
 import { generateOTP } from "../../utils/otp/index.js";
 import { OAuth2Client } from "google-auth-library";
 import jwt from "jsonwebtoken";
-import joi from "joi";
 import { comparePassword, hashPassword } from "../../utils/hash/index.js";
 import { Token } from "../../DB/models/token.model.js";
 import { generateToken } from "../../utils/token/index.js";
@@ -138,6 +136,12 @@ export const login = async (req, res, next) =>{
             throw new Error("Invalid credentials!", {cause:401});// paswword is not correct
         }
 
+        // check if user is deleted
+        if(userExist.deletedAt){
+            userExist.deletedAt = undefined;
+            await userExist.save();
+        }
+
         const accessToken = generateToken({
             payload:{id:userExist._id},
             option:{expiresIn:"1d"}
@@ -196,7 +200,7 @@ export const resetPassword = async (req, res, next)=>{
         throw new Error("User not found!", {cause:404});
     }
     // check OTP
-    if(userExist.otp!=otp){
+    if(userExist.otp!== otp){
         throw new Error("Invalid code!", {cause:400});
     }
     // check OTP expire time
@@ -206,6 +210,8 @@ export const resetPassword = async (req, res, next)=>{
     // update password
     userExist.password = hashPassword(newPassword)
     userExist.credentialsUpdatedAt = Date.now();
+    userExist.otp = undefined;
+    userExist.otpExpire = undefined;  
     // update DB
     await userExist.save();
     // destroy all refresh tokens

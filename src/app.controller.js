@@ -5,8 +5,9 @@ import { globalErrorHandler } from "./utils/error/index.js";
 import rateLimit from "express-rate-limit";
 export function bootstrap (app, express) {
     // handle rate limiter >> used to handle time between [limit >> number]requests
+    // middleware has access on req and res
     const limter = rateLimit({
-        windowMs: 60 *1000, // 1 min
+        windowMs: 60 *1000, // 1 min // zy time code otp of whatsapp in registeration
         limit:3,
         // legacyHeaders:true // hide no of limited times from headers
         handler:(req,res,next, options)=>{
@@ -17,7 +18,11 @@ export function bootstrap (app, express) {
     })
     // const limter2 = rateLimit({
     //     windowMs: 60 *1000, // 1 min
-    //     limit:3,
+        // limit can take number or function
+    //     limit:3, // (req,res,next)=>{
+        // if (req.user.role ==="admin")return 1000
+        // return 3
+        // }
     //     // legacyHeaders:true // hide no of limited times from headers
     //     handler:(req,res,next, options)=>{
     //     // throw new Error("ay haga", {cause:400}) // option >> btdeny kol elly ratelimit 3ndha by default
