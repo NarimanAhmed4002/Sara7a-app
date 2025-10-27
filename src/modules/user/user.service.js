@@ -55,3 +55,16 @@ export const uploadProfileCloud = async (req, res, next)=>{
         data:{secure_url, public_id}
     })
 }
+
+export const getProfile = async (req, res, next) => {
+   const user = await User.findOne(
+    {_id: req.user._id},
+    {},
+    { populate:[{ path: "messages", populate:[{ path: "receiver", select:"-password"}] }] }
+)
+    return res.status(200).json({
+        message: "User profile successfully.",
+        success: true,
+        data: user
+    })
+}  

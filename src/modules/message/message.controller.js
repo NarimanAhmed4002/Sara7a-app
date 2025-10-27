@@ -1,8 +1,8 @@
 import { Router } from "express";
 import { fileUpload } from "../../utils/multer/index.js";
 import { isValid } from "../../middleware/validation.middleware.js";
-import { sendMessageSchema } from "./message.validation.js";
-import { sendMessage } from "./message.service.js";
+import { getMessageSchema, sendMessageSchema } from "./message.validation.js";
+import { getMessage, sendMessage } from "./message.service.js";
 import { isAuthenticated } from "../../middleware/auth.middleware.js";
 const router = Router()
 // sarah.com/message/2345654321234567890
@@ -19,4 +19,7 @@ router.post("/:receiver/sender",
     isValid(sendMessageSchema),
     sendMessage
 )
+
+// get specific message by id
+router.get("/:id", isAuthenticated, isValid(getMessageSchema),getMessage)
 export default router 

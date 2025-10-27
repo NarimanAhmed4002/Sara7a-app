@@ -71,6 +71,7 @@ const schema = new Schema({
     deletedAt:{
         type:Date
     },
+
 },{timestamps: true, toObject:{ virtuals:true }, toJSON:{ virtuals:true }});
 
 export const User = model("User", schema)
@@ -87,4 +88,10 @@ schema.virtual("fullName").set(function (value) {
 
 schema.virtual("Age").get(function (){
     return new Date().getFullYear() - new Date(this.dob).getFullYear();
+})
+
+schema.virtual("messages", {
+    ref: "Message",
+    localField: "_id",
+    foreignField: "receiver"
 })

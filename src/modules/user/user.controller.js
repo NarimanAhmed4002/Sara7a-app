@@ -22,4 +22,5 @@ router.post("/uploud-profile-cloud",
 
 )
 
+router.get("/",isAuthenticated, userService.getProfile)
 export default router

@@ -23,3 +23,25 @@ export const sendMessage = async(req, res, next) => {
         success:true
     })
 } 
+
+export const getMessage = async(req, res, next) => {
+    // get data from req
+    const {id} = req.params;
+
+    // get specific message 
+    const message = await Message.findOne(
+        {_id:id, receiver:req.user._id},
+        {},
+        { populate: [{ path:"receiver", select :"-password -createdAt -updatedAt -deletedAt -credentialsUpdatedAt -__v" }] }
+    ) // {} | null
+    if( !message ) {
+        throw new Error("Message not found.", {cause:404});
+    }
+
+    // send response
+    res.status(200).json({
+        message:"Message retrieved successfully.",
+        success:true,
+        data:message
+    })
+}
