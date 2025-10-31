@@ -20,3 +20,7 @@ export const resetPassword = joi.object({
     newPassword:generalFields.password.required(),
     rePassword:generalFields.rePassword("newPassword").required()
 })
+
+export const refreshTokenSchema = {
+    headers:generalFields.headers
+}

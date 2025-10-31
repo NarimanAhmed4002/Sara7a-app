@@ -3,7 +3,7 @@ import { Router } from "express";
 import * as authService from "./auth.service.js";
 import { isValid } from "../../middleware/validation.middleware.js";
 import { registerSchema, resetPassword } from "./auth.validation.js";
-import { isAuthenticated } from "../../middleware/auth.middleware.js";
+import { isAuthenticated, tokenTypes } from "../../middleware/auth.middleware.js";
 
 const router = Router();
 router.post("/register", isValid(registerSchema), authService.register)
@@ -12,5 +12,6 @@ router.post("/verify-account", authService.verifyAccount)
 router.post("/send-otp", authService.sendOTP)
 router.post("/google-login", authService.googleLogin)
 router.patch("/reset-password",isValid(resetPassword), authService.resetPassword)
-router.post("/logout", isAuthenticated, authService.logOut)
+router.post("/logout", isAuthenticated(), authService.logOut)
+router.post("/refresh-token", isAuthenticated(tokenTypes.refresh),authService.refreshToken)
 export default router

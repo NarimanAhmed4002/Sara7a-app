@@ -19,13 +19,28 @@ export const isValid = (schema)=>{
 
 export const generalFields = {
     email:joi.string().email(),
-    password:joi.string().min(8),
+    password:joi.string().min(8).max(50),
     otp:joi.string().length(5),
     phoneNumber:joi.string().length(11),
     name:joi.string().min(3).max(50),
     dob:joi.date(),
-    rePassword:(ref) => joi.string().min(8).valid(joi.ref(ref)),
-    objectId:joi.string().hex().length(24)  
+    confirmPassword:(ref) => joi.string().min(8).max(50).valid(joi.ref(ref)),
+    objectId:joi.string().hex().length(24),
+    headers:joi.object().keys({
+        authorization:joi.string().required().messages({
+            "string.empty":"token is required!",
+            "any.required":"token is required!"
+        }),
+        accept:joi.string(),
+        host:joi.string(),
+        "accept-encoding":joi.string(),
+        "content-type":joi.string(),
+        "user-agent":joi.string(),
+        "cashe-control":joi.string(),
+        "postman-token":joi.string(),
+        "content-length":joi.string(),
+        connection:joi.string(),
+    })  
 }
 
 

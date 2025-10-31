@@ -1,6 +1,7 @@
 import { User } from "../../DB/models/user.model.js";
 import fs from "node:fs";
 import cloudinary, { uploadFile } from "../../utils/cloud/cloudinary.config.js";
+import { comparePassword, hashPassword } from "../../utils/hash/index.js";
 export const deleteUser = async (req, res, next)=>{
     await User.updateOne(
         {_id:req.user._id}, 
@@ -57,14 +58,30 @@ export const uploadProfileCloud = async (req, res, next)=>{
 }
 
 export const getProfile = async (req, res, next) => {
-   const user = await User.findOne(
-    {_id: req.user._id},
-    {},
-    { populate:[{ path: "messages", populate:[{ path: "receiver", select:"-password"}] }] }
-)
+    const user = await User.findOne(
+        {_id: req.user._id},
+        {},
+        { populate:[{ path: "messages", populate:[{ path: "receiver", select:"-password"}] }] }
+    );
     return res.status(200).json({
         message: "User profile successfully.",
         success: true,
         data: user
     })
-}  
+};
+
+export const updatePassword = async (req, res, next) => {
+    const {oldPassword, newPassword} = req.body;
+    const comparedPassword = comparePassword(oldPassword, req.user.password);
+    if(!comparedPassword){
+        throw new Error("Invalid password!", {cause:404 });
+    };
+    if(oldPassword === newPassword){
+        throw new Error("New password must be different from old password!", {cause:400});
+    };
+    await User.updateOne({_id:req.user._id},{password:hashPassword(newPassword), credentialsUpdatedAt:Date.now()});
+    return res.status(200).json({
+        message:"Password updated successfully.",
+        success:true
+    });
+}

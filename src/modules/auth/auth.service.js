@@ -2,10 +2,10 @@ import { User } from "../../DB/models/user.model.js";
 import { sendMail } from "../../utils/email/index.js";
 import { generateOTP } from "../../utils/otp/index.js";
 import { OAuth2Client } from "google-auth-library";
-import jwt from "jsonwebtoken";
+import jwt, { sign } from "jsonwebtoken";
 import { comparePassword, hashPassword } from "../../utils/hash/index.js";
 import { Token } from "../../DB/models/token.model.js";
-import { generateToken } from "../../utils/token/index.js";
+import { generateToken, verifyToken } from "../../utils/token/index.js";
 
 export const register = async (req, res, next)=>{
     const {fullName, email, password, phoneNumber, dob} = req.body;
@@ -144,11 +144,13 @@ export const login = async (req, res, next) =>{
 
         const accessToken = generateToken({
             payload:{id:userExist._id},
+            signature:process.env.ACCESS_TOKEN_SIGNATURE,
             option:{expiresIn:"1d"}
         })
 
         const refreshToken = generateToken({
             payload:{id:userExist._id},
+            signature:process.env.REFRESH_TOKEN_SIGNATURE,
             option:{expiresIn:"7d"}
         })
 
@@ -232,5 +234,19 @@ export const logOut = async (req, res, next) => {
     return res.status(200).json({
         message:"Logged out successfully!",
         success:true
+    })
+}
+
+export const refreshToken = async (req, res, next) => {
+    const user = req.user;
+    const accessToken = generateToken({
+        payload:{id:user._id},
+        signature:process.env.ACCESS_TOKEN_SIGNATURE,
+        option:{expiresIn:"1d"}
+    })
+    return res.status(200).json({
+        message:"User logged in successfully!",
+        success:true,
+        data:{accessToken}
     })
 }
