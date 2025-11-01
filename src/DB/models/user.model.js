@@ -48,6 +48,9 @@ const schema = new Schema({
     otp:{
         type:Number
     },
+    hashOTP:{
+        type:String
+    },
     otpExpire:{
         type:Date
     },
@@ -75,10 +78,6 @@ const schema = new Schema({
     otpAttempts:{
         type:Number,
         default:0
-    },
-    confirmed: {
-        type:Boolean,
-        default:false
     },
 
 },{timestamps: true, toObject:{ virtuals:true }, toJSON:{ virtuals:true }});

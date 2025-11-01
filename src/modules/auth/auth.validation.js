@@ -24,3 +24,15 @@ export const resetPassword = joi.object({
 export const refreshTokenSchema = {
     headers:generalFields.headers
 }
+
+export const verifyAccountSchema = joi.object({
+    email:generalFields.email.required(),
+    otp:generalFields.otp.required().messages({
+        "string.length":"OTP must be 5 characters long!",
+        "string.empty":"OTP is required!",
+        "any.required":"OTP is required!"
+    })
+})
+export const sendOtpSchema = joi.object({
+    email:generalFields.email.required()
+})

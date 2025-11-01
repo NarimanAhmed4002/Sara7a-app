@@ -3,18 +3,18 @@ import {authRouter, userRouter, messageRouter} from "./modules/index.js"
 import cors from "cors";
 import { globalErrorHandler } from "./utils/error/index.js";
 import rateLimit from "express-rate-limit";
+
 export function bootstrap (app, express) {
-    const limter = rateLimit({
-        windowMs: 60 *1000, // 1 min // zy time code otp of whatsapp in registeration
-        limit:3,
-        // legacyHeaders:true // hide no of limited times from headers
-        handler:(req,res,next, options)=>{
-        // throw new Error("ay haga", {cause:400}) // option >> btdeny kol elly ratelimit 3ndha by default
-        throw new Error(options.message,{cause:options.statusCode});
+    const limiter = rateLimit({
+        windowMs: 1 * 60 * 1000, 
+        limit: 3,
+        handler: (req, res, next, options) => {
+            throw new Error(options.message, { cause: options.statusCode });
         },
-        // identifier:request.ip // req.token // each user has its own limit
-    })
-    app.use("/auth", limter)
+        standardHeaders: true,
+        legacyHeaders: false
+    });
+    app.use("/auth", limiter)
     // app.use("/user", limter2) // momken a3ml configrations lkol module
     // parse raw json
     app.use(express.json());

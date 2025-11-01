@@ -50,15 +50,44 @@ export const verifyAccount = async (req, res, next)=>{
         const userExist = await User.findOne({
             email,
             otp,
-            otpExpire:{$gt:Date.now()}
+            otpExpire:{$gt:Date.now()},
+            isVerified:false,
+            deletedAt:{$exists:false}
         })
         // check if email user entered is correct, otp & otp time
         if(!userExist) {
             throw new Error("Invalid code!");
         }
+
+        if(userExist.otpBlockUntil && userExist.otpBlockUntil > Date.now()){
+            const remainingTime = Math.ceil((userExist.otpBlockUntil - Date.now()) / 1000);
+            return res.status(200).json({
+                message:`You are blocked from verifying your account. Please try again after ${remainingTime} seconds.`,
+            })
+        };
+
+        if(userExist.otpBlockUntil && userExist.otpBlockUntil < Date.now()){
+            userExist.otpAttempts = 0;
+            userExist.otpBlockUntil = undefined;
+            await userExist.save();
+        }
+         
+        if(! await compareHash(otp, userExist.hashOTP)){
+            const failedAttempts = userExist.failedOTPAttempts + 1;
+            await User.findByIdAndUpdate({_id:userExist._id}, {failedOTPAttempts: failedAttempts});
+            if(failedAttempts > 5){
+                await User.findByIdAndUpdate({_id:userExist._id}, {otpBlockUntil: Date.now() + 5 * 60 * 1000});
+
+               return res.status(200).json({
+                message:"You have exceeded the maximum number of attempts. Please try again after 5 minutes.",
+               }) 
+            }
+            throw new Error("Invalid code!");
+        }
         // update user in BE (RAM)
         userExist.isVerified = true
         userExist.otp = undefined
+        userExist.hashOTP = undefined
         userExist.otpExpire = undefined
         // save the updates in DB
         await userExist.save();
@@ -73,20 +102,52 @@ export const verifyAccount = async (req, res, next)=>{
 export const sendOTP = async (req, res, next)=>{
     // get data from req
     const {email} = req.body;
-    // new otp
-    const {otp, otpExpire} = generateOTP(5*60*1000)
-    // update user
-    const userExist = await User.findOneAndUpdate({email}, {otp, otpExpire});
-    if(!userExist){
-        throw new Error("User not found!", {cause:404});
+    const user = await User.findOne({email});
+    if(!user){
+        throw new Error("User not found!", {cause:400});
     }
+    if(user.isVerified){
+        throw new Error("Your account is already verified!", {cause:400});
+    };
+    if(user.deletedAt < Date.now()){
+        throw new Error("Your account is deleted!", {cause:400});
+    }
+    if(user.otpExpire > Date.now()){
+        throw new Error("You can't request new code now, please wait until your current code expires!", {cause:400});
+    }
+    if(user.otpBlockUntil && user.otpBlockUntil > Date.now()){
+            const remainingTime = Math.ceil((user.otpBlockUntil - Date.now()) / 1000);
+            return res.status(200).json({
+                message:`You are blocked from verifying your account. Please try again after ${remainingTime} seconds.`,
+            })
+        };
+
+        if(user.otpBlockUntil && user.otpBlockUntil < Date.now()){
+            user.otpAttempts = 0;
+            user.otpBlockUntil = undefined;
+            await user.save();
+        }
+         
+        if(! await compareHash(otp, user.hashOTP)){
+            const failedAttempts = user.failedOTPAttempts + 1;
+            await User.findByIdAndUpdate({_id:user._id}, {failedOTPAttempts: failedAttempts});
+            if(failedAttempts > 5){
+                await User.findByIdAndUpdate({_id:user._id}, {otpBlockUntil: Date.now() + 5 * 60 * 1000});
+
+               return res.status(200).json({
+                message:"You have exceeded the maximum number of attempts. Please try again after 5 minutes.",
+               }) 
+            }
+            throw new Error("Invalid code!");
+        }
+    // new otp
+    const {otp, otpExpire, hashOTP} = generateOTP(5*60*1000)
+    
     // send email
-    await sendMail({
-        to:email,
-        subject:"Send code",
-        html:`<p>Your code to verify your account is ${otp}.</p>`
-    })
-    // send response
+    emailEvent.emit("sendEmail", {name: user.fullName , email, otp})
+    // update user
+    const userExist = await User.findByIdAndUpdate({_id:user._id}, {otp, otpExpire, hashOTP});
+     // send response
     return res.status(200).json({
         message:"Your code is sent successfully!",
         success:true
