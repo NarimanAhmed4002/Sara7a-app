@@ -1,10 +1,19 @@
 import { model, Schema } from "mongoose";
 
 const schema = new Schema({
-    token:String,
-    user:{
+    jti:{
+        type:String,
+        required:true,
+        unique:true
+    },
+    expiresIn:{
+        type:Number,
+        required:true
+    },
+    userId:{
         type:Schema.Types.ObjectId,
-        ref:"User"
+        ref:"User",
+        required:true
     },
     type:{
         type:String,

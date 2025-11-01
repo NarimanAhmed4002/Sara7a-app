@@ -2,11 +2,11 @@ import { OAuth2Client } from "google-auth-library";
 import jwt from "jsonwebtoken";
 import { Token } from "../../DB/models/token.model.js";
 import { User } from "../../DB/models/user.model.js";
-import { sendMail } from "../../utils/email/index.js";
 import { comparePassword, hashPassword } from "../../utils/hash/index.js";
 import { generateOTP } from "../../utils/otp/index.js";
 import { generateToken } from "../../utils/token/index.js";
 import { emailEvent } from "../../utils/EmailEvent/emailEvent.js";
+import { nanoid } from "nanoid";
 
 export const register = async (req, res, next)=>{
     const {fullName, email, password, phoneNumber, dob} = req.body;
@@ -191,16 +191,17 @@ export const login = async (req, res, next) =>{
             await userExist.save();
         }
 
+        const jwtid = nanoid()
         const accessToken = generateToken({
             payload:{id:userExist._id},
             signature:process.env.ACCESS_TOKEN_SIGNATURE,
-            option:{expiresIn:"1d"}
+            option:{expiresIn:Number(process.env.ACCESS_EXPIRES_IN), jwtid}
         })
 
         const refreshToken = generateToken({
             payload:{id:userExist._id},
             signature:process.env.REFRESH_TOKEN_SIGNATURE,
-            option:{expiresIn:"7d"}
+            option:{expiresIn:Number(process.env.REFRESH_EXPIRES_IN), jwtid}
         })
 
         await Token.create({token:refreshToken, user:userExist._id})
@@ -274,11 +275,22 @@ export const resetPassword = async (req, res, next)=>{
     })
 }
 
+export const logoutEnum = {logOutFromAllDevices:"logOutFromAllDevices", logOut:"logOut"}
 export const logOut = async (req, res, next) => {
-    // get token from headers
-    const token = req.headers.authorization;
-    // create token in DB
-    await Token.create({token, user:req.user._id})
+    const {flag} = req.body;
+
+    switch (flag) {
+        case logoutEnum.logOutFromAllDevices:
+            await User.updateOne({_id:req.decoded.id}, {credentialsUpdatedAt:Date.now()})
+            break;
+        default:
+            await Token.create([{
+                token: req.decoded.token,
+                expiresIn:req.decoded.iat + Number(process.env.REFRESH_EXPIRES_IN),
+                userId:req.decoded.id,
+            }]);
+            break;
+    }
     // send response
     return res.status(200).json({
         message:"Logged out successfully!",

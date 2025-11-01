@@ -2,6 +2,9 @@ import { User } from "../../DB/models/user.model.js";
 import fs from "node:fs";
 import cloudinary, { uploadFile } from "../../utils/cloud/cloudinary.config.js";
 import { comparePassword, hashPassword } from "../../utils/hash/index.js";
+import sharp from "sharp";
+import path from "node:path";
+import { nanoid } from "nanoid";
 export const deleteUser = async (req, res, next)=>{
     await User.updateOne(
         {_id:req.user._id}, 
@@ -18,6 +21,29 @@ export const deleteUser = async (req, res, next)=>{
 }
 
 export const uploadProfile = async(req, res, next)=>{
+    const {size} = req.body; // small, medium, large
+    const dimensions = {
+        small:{width:100, height:100},
+        medium:{width:200, height:200},
+        large:{width:400, height:400}
+    };
+
+    const directryPath = path.resolve("../../../uploads/temp");
+
+    const fileName = `${nanoid()}.${req.file.mimetype.split("/")[1]}`;
+
+    const tempPath = path.join(directryPath, fileName);
+
+    if(!fs.existsSync(directryPath)){
+        fs.mkdirSync(directryPath, {recursive:true});
+    };
+
+    const imgDimensions = dimensions[size];
+    
+    await sharp(req.file.path)
+        .resize(imgDimensions.width, imgDimensions.height)
+        .toFile(tempPath);
+
     if(req.user.profilePicture){
         fs.unlinkSync(req.user.profilePicture); // delete old pic from the server if it exists
     }

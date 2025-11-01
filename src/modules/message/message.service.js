@@ -30,12 +30,16 @@ export const getMessage = async(req, res, next) => {
 
     // get specific message 
     const message = await Message.findOne(
-        {_id:id, receiver:req.user._id},
+        {_id:id, receiver:req.user._id, deletedAt:{$exists:false} } ,
         {},
         { populate: [{ path:"receiver", select :"-password -createdAt -updatedAt -deletedAt -credentialsUpdatedAt -__v" }] }
     ) // {} | null
     if( !message ) {
         throw new Error("Message not found.", {cause:404});
+    }
+
+    if(message.receiverId.toString() !== req.user._id.toString()){
+        throw new Error("You are not authorized to view this message.", {cause:403});
     }
 
     // send response
@@ -45,3 +49,35 @@ export const getMessage = async(req, res, next) => {
         data:message
     })
 }
+
+export const getAllMessages = async(req, res, next) => {
+    let page = req.query.page || 1;
+    let limit = req.query.limit || 2;
+    const messages = await Message.find(
+        {receiverId:req.user._id, deletedAt:{$exists:false} },
+        {},
+        {limit, skip:(page - 1) * limit, sort:{createdAt:-1}}
+    );
+
+    let totalMessages = await Message.countDocuments(
+        {receiverId:req.user._id, deletedAt:{$exists:false}});
+
+    let totalPages = Math.ceil(totalMessages / limit);
+    res.status(200).json({
+        message:"Messages retrieved successfully.",
+        success:true,
+        data:{
+            pagination:{
+                currentPage:page,
+                limit,
+                totalMessages,
+                totalPages
+            },
+            messages
+        }
+    })
+}
+
+export const freezeMessage = async(req, res, next) => {};
+
+export const hardDeleteMessage = async(req, res, next) => {};

@@ -3,6 +3,7 @@ import {authRouter, userRouter, messageRouter} from "./modules/index.js"
 import cors from "cors";
 import { globalErrorHandler } from "./utils/error/index.js";
 import rateLimit from "express-rate-limit";
+import { cronJobForDeleteTokens } from "./utils/cronJob/token.cron.js";
 
 export function bootstrap (app, express) {
     const limiter = rateLimit({
@@ -14,6 +15,9 @@ export function bootstrap (app, express) {
         standardHeaders: true,
         legacyHeaders: false
     });
+
+    cronJobForDeleteTokens();
+    
     app.use("/auth", limiter)
     // app.use("/user", limter2) // momken a3ml configrations lkol module
     // parse raw json
