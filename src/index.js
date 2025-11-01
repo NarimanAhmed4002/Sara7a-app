@@ -5,7 +5,10 @@ import schedule from "node-schedule";
 import { User } from "./DB/models/user.model.js";
 import { deleteFolder } from "./utils/cloud/cloudinary.config.js";
 import { Message } from "./DB/models/message.model.js";
+
+
 dotenv.config({path:"/config/local.env"});
+
 // Permanently delete users who have been soft-deleted for more than 3 months                       
 // schedule job to run at 3:02:01 AM every day of every month
 schedule.scheduleJob("1 2 3 * * *", async () => {

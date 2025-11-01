@@ -1,16 +1,16 @@
+import { OAuth2Client } from "google-auth-library";
+import jwt from "jsonwebtoken";
+import { Token } from "../../DB/models/token.model.js";
 import { User } from "../../DB/models/user.model.js";
 import { sendMail } from "../../utils/email/index.js";
-import { generateOTP } from "../../utils/otp/index.js";
-import { OAuth2Client } from "google-auth-library";
-import jwt, { sign } from "jsonwebtoken";
 import { comparePassword, hashPassword } from "../../utils/hash/index.js";
-import { Token } from "../../DB/models/token.model.js";
-import { generateToken, verifyToken } from "../../utils/token/index.js";
+import { generateOTP } from "../../utils/otp/index.js";
+import { generateToken } from "../../utils/token/index.js";
+import { emailEvent } from "../../utils/EmailEvent/emailEvent.js";
 
 export const register = async (req, res, next)=>{
     const {fullName, email, password, phoneNumber, dob} = req.body;
     // validate data
-    
     const userExistence = await User.findOne({
             $or:[
                 { $and:[
@@ -26,33 +26,21 @@ export const register = async (req, res, next)=>{
             ]
         });
         if (userExistence) {
-            throw new Error("User already exists!", {cause:409/**conflict */});
+            throw new Error("User already exists!", {cause:409});
         }
-
-        const user = new User({
-            fullName,
-            email,
-            password:hashPassword(password),
-            phoneNumber,
-            dob
-        }); 
-
         // otp >> one time password
-        const {otp, otpExpire} = generateOTP()
+        const {otp, otpExpire, hashOTP } = generateOTP()
         user.otp = otp;
         user.otpExpire = otpExpire;
+        user.hashOTP = hashOTP;
 
-        if(email) {await sendMail({
-            to:email, 
-            subject:"Verify your account",
-            html:`<p>Your code is ${otp}.</p>`
-        })}
+        emailEvent.emit("sendEmail", {name: fullName , email, otp})
 
-        // const [firstName, lastName] = fullName.split(" ");
-        // const user = new User({firstName,lastName,email,password:bycrypt.hashSync(password, 10),phoneNumber,dob});
+        const [firstName, lastName] = fullName.split(" ");
+        const user = new User({firstName,lastName,email,password:hashPassword(password),phoneNumber,dob});
         await user.save();
 
-        return res.status(201).json({message:"User created Successfully!", success:true})
+        return res.status(201).json({message:"User created Successfully!", success:true, data:{user}})
 }
 
 export const verifyAccount = async (req, res, next)=>{

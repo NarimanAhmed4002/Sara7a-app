@@ -18,7 +18,7 @@ export const resetPassword = joi.object({
     email:generalFields.email.required(),
     otp:generalFields.otp.required(),
     newPassword:generalFields.password.required(),
-    rePassword:generalFields.rePassword("newPassword").required()
+    rePassword:generalFields.confirmPassword("newPassword").required()
 })
 
 export const refreshTokenSchema = {

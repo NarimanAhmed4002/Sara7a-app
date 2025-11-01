@@ -4,8 +4,6 @@ import cors from "cors";
 import { globalErrorHandler } from "./utils/error/index.js";
 import rateLimit from "express-rate-limit";
 export function bootstrap (app, express) {
-    // handle rate limiter >> used to handle time between [limit >> number]requests
-    // middleware has access on req and res
     const limter = rateLimit({
         windowMs: 60 *1000, // 1 min // zy time code otp of whatsapp in registeration
         limit:3,
@@ -14,23 +12,8 @@ export function bootstrap (app, express) {
         // throw new Error("ay haga", {cause:400}) // option >> btdeny kol elly ratelimit 3ndha by default
         throw new Error(options.message,{cause:options.statusCode});
         },
-        identifier:req.ip // req.token // each user has its own limit
+        // identifier:request.ip // req.token // each user has its own limit
     })
-    // const limter2 = rateLimit({
-    //     windowMs: 60 *1000, // 1 min
-        // limit can take number or function
-    //     limit:3, // (req,res,next)=>{
-        // if (req.user.role ==="admin")return 1000
-        // return 3
-        // }
-    //     // legacyHeaders:true // hide no of limited times from headers
-    //     handler:(req,res,next, options)=>{
-    //     // throw new Error("ay haga", {cause:400}) // option >> btdeny kol elly ratelimit 3ndha by default
-    //     throw new Error(options.message,{cause:options.statusCode});
-    //     },
-    //      skipSuccessfulRequests:true, // don't count successful requests
-    //     identifier:req.ip // req.token
-    // }) 
     app.use("/auth", limter)
     // app.use("/user", limter2) // momken a3ml configrations lkol module
     // parse raw json

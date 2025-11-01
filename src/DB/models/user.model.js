@@ -71,6 +71,15 @@ const schema = new Schema({
     deletedAt:{
         type:Date
     },
+    otpBlockUntil:Date,
+    otpAttempts:{
+        type:Number,
+        default:0
+    },
+    confirmed: {
+        type:Boolean,
+        default:false
+    },
 
 },{timestamps: true, toObject:{ virtuals:true }, toJSON:{ virtuals:true }});
 
