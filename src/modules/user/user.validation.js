@@ -9,3 +9,9 @@ export const updatePasswordSchema = {
     }),
     headers:generalFields.headers
 };
+
+export const uploadProfileSchema = {
+    body:Joi.object().keys({
+        size:Joi.string().valid
+    }).required()
+}
